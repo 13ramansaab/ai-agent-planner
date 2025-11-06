@@ -14,7 +14,7 @@ function App() {
   const [progress, setProgress] = useState<OrchestrationProgress>({
     currentPhase: '',
     completedPhases: [],
-    totalPhases: 9
+    totalPhases: 12
   });
 
   const handleProjectSubmit = async (name: string, description: string, competitorLinks: string[], competitorReviews: string[]) => {
@@ -66,7 +66,7 @@ function App() {
     setProgress({
       currentPhase: '',
       completedPhases: [],
-      totalPhases: 9
+      totalPhases: 12
     });
   };
 

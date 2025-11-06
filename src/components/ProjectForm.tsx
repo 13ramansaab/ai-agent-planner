@@ -201,7 +201,7 @@ export function ProjectForm({ onSubmit, isLoading }: ProjectFormProps) {
       </div>
 
       <div className="text-center text-sm text-gray-500">
-        <p>Planning includes: Competitor Analysis, Strategy, UX, System Design, Data Model, API, UI Design, QA Review, and Implementation Prompts</p>
+        <p>Planning includes: Research Analysis, Strategy, UX, System Architecture, Data Model, API, UI Design, Implementation Prompts, QA Manager, Technical Docs, Critic Review, and Final Composition</p>
       </div>
     </form>
   );

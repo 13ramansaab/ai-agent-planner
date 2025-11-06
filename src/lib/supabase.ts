@@ -24,7 +24,7 @@ export type Project = {
 export type PlanningPhase = {
   id: string;
   project_id: string;
-  phase_type: 'competitor' | 'strategy' | 'ux' | 'system' | 'data' | 'api' | 'ui' | 'prompts' | 'critic' | 'composer';
+  phase_type: 'competitor' | 'strategy' | 'ux' | 'system' | 'data' | 'api' | 'ui' | 'prompts' | 'qa' | 'techwriter' | 'critic' | 'composer';
   output: any;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   model_used?: string;

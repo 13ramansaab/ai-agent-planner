@@ -8,6 +8,8 @@ export type AgentPhase = {
     | 'api'
     | 'ui'
     | 'prompts'
+    | 'qa'
+    | 'techwriter'
     | 'critic'
     | 'composer';
   name: string;
@@ -23,80 +25,106 @@ GLOBAL SYSTEM GUARDRAILS:
 - Never contradict earlier phases. If you must change something, emit a Correction note and update the Decision Ledger.
 - Keep v1 shippable in 6–8 weeks with minimal dependencies; note stretch items separately.
 - Respect privacy/compliance and avoid vendor lock-in where feasible.
+- Follow company engineering standards: layered architecture, async jobs, metrics & logging, observability.
 - If competitor inputs are provided, map at least one top opportunity into a Must feature (or state why not).
 `;
 
 export const AGENT_PHASES: AgentPhase[] = [
   {
     type: 'competitor',
-    name: 'Competitor & Review Miner',
+    name: 'Research Analyst',
     description:
-      'Parse competitor sites & user reviews to extract jobs, pains, gaps, requests',
+      'Analyze competitor products, user reviews, and market trends to extract structured insights',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Competitor & Review Miner. Analyze provided competitor links and/or user reviews.
-Extract: recurring user jobs, pain points, requested features, and perceived gaps. Cluster findings,
-estimate frequency (low/med/high), sentiment (−2..+2), and impact on activation, retention, or revenue.
-Propose high-leverage opportunities and risks for our v1. JSON only.`,
+      `You are a Research Analyst. Your goal is to extract structured insight from competitor data and user feedback.
+Inputs: project idea, competitor app URLs, reviews, articles, public data.
+
+Analyze:
+- Market trends and demand spikes
+- User pain points from reviews (tone, sentiment, frequency)
+- Competitor strengths, weaknesses, differentiators
+- Unmet needs and innovation gaps
+
+Output market signals, competitor matrix, opportunities, and market risk score. JSON only.`,
     schema: {
       type: 'object',
-      required: ['themes', 'topInsights', 'opportunities', 'risks'],
+      required: ['marketSignals', 'competitorMatrix', 'userPersonas', 'opportunities', 'marketRiskScore'],
       properties: {
-        themes: {
+        marketSignals: {
           type: 'array',
           items: {
             type: 'object',
-            required: ['name', 'signals'],
+            required: ['signal', 'source', 'trend'],
             properties: {
-              name: { type: 'string' },
-              signals: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  required: ['quote', 'freq', 'sentiment'],
-                  properties: {
-                    quote: { type: 'string' },
-                    freq: { type: 'string', enum: ['low', 'medium', 'high'] },
-                    sentiment: { type: 'integer', minimum: -2, maximum: 2 }
-                  }
-                }
-              }
+              signal: { type: 'string' },
+              source: { type: 'string' },
+              trend: { type: 'string', enum: ['growing', 'stable', 'declining'] },
+              sentiment: { type: 'integer', minimum: -2, maximum: 2 }
             }
           }
         },
-        topInsights: { type: 'array', items: { type: 'string' } },
+        competitorMatrix: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['name', 'strengths', 'weaknesses', 'differentiators'],
+            properties: {
+              name: { type: 'string' },
+              strengths: { type: 'array', items: { type: 'string' } },
+              weaknesses: { type: 'array', items: { type: 'string' } },
+              differentiators: { type: 'array', items: { type: 'string' } }
+            }
+          }
+        },
+        userPersonas: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['name', 'painPoints', 'goals', 'tone'],
+            properties: {
+              name: { type: 'string' },
+              painPoints: { type: 'array', items: { type: 'string' } },
+              goals: { type: 'array', items: { type: 'string' } },
+              tone: { type: 'string' }
+            }
+          }
+        },
         opportunities: {
           type: 'array',
           items: {
             type: 'object',
-            required: ['idea', 'whyNow', 'impactArea'],
+            required: ['idea', 'whyNow', 'impactArea', 'effort'],
             properties: {
               idea: { type: 'string' },
               whyNow: { type: 'string' },
-              impactArea: {
-                type: 'string',
-                enum: ['activation', 'retention', 'revenue', 'perf', 'trust']
-              }
+              impactArea: { type: 'string', enum: ['activation', 'retention', 'revenue', 'perf', 'trust'] },
+              effort: { type: 'string', enum: ['low', 'medium', 'high'] }
             }
           }
         },
-        risks: { type: 'array', items: { type: 'string' } }
+        marketRiskScore: { type: 'string', enum: ['low', 'medium', 'high'] }
       }
     }
   },
   {
     type: 'strategy',
-    name: 'Product Strategist',
+    name: 'Strategy Architect',
     description:
-      'Defines market need, personas, features, and success metrics',
+      'Defines market strategy, feature prioritization, risk assessment, and monetization',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Product Strategist. Combine the idea with Competitor & Review Miner output.
-Produce a strategy that is feasible for a 6–8 week v1.
+      `You are a Strategy Architect. Using prior research data, output a realistic business and product plan.
 
-Must include: problem, personas, jobs-to-be-done, market signals,
-feature set categorized Must/Should/Could, success metrics (North Star + 3 guardrails),
-and a Decision Ledger update for monetization & platform focus.
+Must include:
+- Problem statement and user personas from research
+- Jobs-to-be-done and market signals
+- Priority matrix scoring each feature by impact vs. effort (Must/Should/Could/Won't)
+- Risk assessment: top 5 risks with mitigation plans
+- Monetization options (subscription, freemium, ads, API)
+- Success metrics: activation %, retention %, CAC/LTV goals, North Star metric
+- Decision Ledger for platform focus and business model
+
 JSON only.`,
     schema: {
       type: 'object',
@@ -104,7 +132,9 @@ JSON only.`,
         'problem',
         'personas',
         'jobsToBeDone',
-        'features',
+        'priorityMatrix',
+        'riskAssessment',
+        'monetization',
         'successMetrics',
         'decisions'
       ],
@@ -114,30 +144,89 @@ JSON only.`,
           type: 'array',
           items: {
             type: 'object',
-            required: ['name', 'goals'],
+            required: ['name', 'goals', 'painPoints'],
             properties: {
               name: { type: 'string' },
-              goals: { type: 'array', items: { type: 'string' } }
+              goals: { type: 'array', items: { type: 'string' } },
+              painPoints: { type: 'array', items: { type: 'string' } }
             }
           }
         },
         jobsToBeDone: { type: 'array', items: { type: 'string' } },
         marketSignals: { type: 'array', items: { type: 'string' } },
-        features: {
+        priorityMatrix: {
           type: 'object',
-          required: ['must', 'should', 'could'],
+          required: ['must', 'should', 'could', 'wont'],
           properties: {
-            must: { type: 'array', items: { type: 'string' } },
-            should: { type: 'array', items: { type: 'string' } },
-            could: { type: 'array', items: { type: 'string' } }
+            must: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['feature', 'impact', 'effort'],
+                properties: {
+                  feature: { type: 'string' },
+                  impact: { type: 'string', enum: ['low', 'medium', 'high'] },
+                  effort: { type: 'string', enum: ['low', 'medium', 'high'] }
+                }
+              }
+            },
+            should: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['feature', 'impact', 'effort'],
+                properties: {
+                  feature: { type: 'string' },
+                  impact: { type: 'string', enum: ['low', 'medium', 'high'] },
+                  effort: { type: 'string', enum: ['low', 'medium', 'high'] }
+                }
+              }
+            },
+            could: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['feature', 'impact', 'effort'],
+                properties: {
+                  feature: { type: 'string' },
+                  impact: { type: 'string', enum: ['low', 'medium', 'high'] },
+                  effort: { type: 'string', enum: ['low', 'medium', 'high'] }
+                }
+              }
+            },
+            wont: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        riskAssessment: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['risk', 'likelihood', 'impact', 'mitigation'],
+            properties: {
+              risk: { type: 'string' },
+              likelihood: { type: 'string', enum: ['low', 'medium', 'high'] },
+              impact: { type: 'string', enum: ['low', 'medium', 'high'] },
+              mitigation: { type: 'string' }
+            }
+          }
+        },
+        monetization: {
+          type: 'object',
+          required: ['models', 'recommendation', 'rationale'],
+          properties: {
+            models: { type: 'array', items: { type: 'string' } },
+            recommendation: { type: 'string' },
+            rationale: { type: 'string' }
           }
         },
         successMetrics: {
           type: 'object',
-          required: ['northStar', 'guardrails'],
+          required: ['northStar', 'activation', 'retention', 'cacLtv'],
           properties: {
             northStar: { type: 'string' },
-            guardrails: { type: 'array', items: { type: 'string' } }
+            activation: { type: 'string' },
+            retention: { type: 'string' },
+            cacLtv: { type: 'string' }
           }
         },
         decisions: {
@@ -204,13 +293,20 @@ Include accessibility notes and empty/error states. JSON only.`,
   {
     type: 'system',
     name: 'System Architect',
-    description: 'Defines overall system design, services, and infrastructure',
+    description: 'Defines overall system design, services, infrastructure, and scalability',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a System Architect. Define services, responsibilities, data flow, third-party deps,
-security, and observability fit for a v1 (single-region, low ops).
-Add a Providers & Policies block (API quotas, caching/attribution, data retention),
-and record any vendor decisions in the Decision Ledger. JSON only.`,
+      `You are a System Architect. Follow company architecture standards: layered service separation, async jobs, metrics & logging, observability via OpenTelemetry, CI/CD hooks.
+
+Define services, responsibilities, data flow, third-party deps, security, and observability fit for a v1 (single-region, low ops).
+
+Include:
+- Infrastructure decision matrix: for each component, decide if managed (Supabase, Firebase, Vercel) or self-hosted (Docker, EC2)
+- Scalability plan: where and how to scale horizontally, expected limits for MVP vs. full scale
+- Providers & Policies (API quotas, caching/attribution, data retention)
+- Non-functional requirements (performance, reliability, privacy)
+
+Record all vendor decisions in the Decision Ledger. JSON only.`,
     schema: {
       type: 'object',
       required: [
@@ -218,6 +314,8 @@ and record any vendor decisions in the Decision Ledger. JSON only.`,
         'dependencies',
         'security',
         'observability',
+        'infrastructureDecisions',
+        'scalability',
         'providersPolicies',
         'nonFunctional',
         'decisions'
@@ -237,6 +335,27 @@ and record any vendor decisions in the Decision Ledger. JSON only.`,
         dependencies: { type: 'array', items: { type: 'string' } },
         security: { type: 'array', items: { type: 'string' } },
         observability: { type: 'array', items: { type: 'string' } },
+        infrastructureDecisions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['component', 'choice', 'rationale'],
+            properties: {
+              component: { type: 'string' },
+              choice: { type: 'string' },
+              rationale: { type: 'string' }
+            }
+          }
+        },
+        scalability: {
+          type: 'object',
+          required: ['strategy', 'maxUsersMVP', 'planForScale'],
+          properties: {
+            strategy: { type: 'string' },
+            maxUsersMVP: { type: 'number' },
+            planForScale: { type: 'string' }
+          }
+        },
         providersPolicies: {
           type: 'object',
           required: ['providers', 'quotas', 'caching', 'attribution', 'dataRetention'],
@@ -410,12 +529,21 @@ Include loading/skeleton patterns and motion durations. Avoid purple/indigo unle
   {
     type: 'prompts',
     name: 'Prompt Engineer',
-    description: 'Generates implementation prompts for Bolt/Cursor',
+    description: 'Generates implementation prompts for Bolt/Cursor with bucketing and ownership',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Prompt Engineer. Generate 6–12 tightly-scoped Bolt/Cursor prompts.
-Each item: title, prompt (with context), files to touch, constraints, acceptance criteria, and test notes.
-Order by dependency, and include a "Project Scaffolding" task first.
+      `You are a Prompt Engineer. Generate actionable prompts following company coding standards (naming conventions, ESLint rules, test coverage goals, folder structure).
+
+Generate 6–12 tightly-scoped Bolt/Cursor prompts. Each item must have:
+- Title, prompt (with context), files to touch
+- Bucket (scaffolding, backend, frontend, qa, docs)
+- Owner (backend/mobile/devops/docs)
+- Constraints and acceptance criteria
+- Acceptance tests (unit/e2e)
+- Rollback or idempotency note
+- Test requirements
+
+Order by dependency. Include "Project Scaffolding" first and "Smoke Test + Release Checklist" last.
 JSON only.`,
     schema: {
       type: 'object',
@@ -425,14 +553,17 @@ JSON only.`,
           type: 'array',
           items: {
             type: 'object',
-            required: ['title', 'prompt', 'files', 'constraints', 'acceptance', 'tests'],
+            required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
             properties: {
               title: { type: 'string' },
               prompt: { type: 'string' },
               files: { type: 'array', items: { type: 'string' } },
+              bucket: { type: 'string', enum: ['scaffolding', 'backend', 'frontend', 'qa', 'docs'] },
+              owner: { type: 'string', enum: ['backend', 'frontend', 'mobile', 'devops', 'docs'] },
               constraints: { type: 'array', items: { type: 'string' } },
               acceptance: { type: 'array', items: { type: 'string' } },
-              tests: { type: 'array', items: { type: 'string' } }
+              tests: { type: 'array', items: { type: 'string' } },
+              rollback: { type: 'string' }
             }
           }
         },
@@ -440,15 +571,163 @@ JSON only.`,
           type: 'array',
           items: {
             type: 'object',
-            required: ['title', 'prompt', 'files', 'constraints', 'acceptance', 'tests'],
+            required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
             properties: {
               title: { type: 'string' },
               prompt: { type: 'string' },
               files: { type: 'array', items: { type: 'string' } },
+              bucket: { type: 'string', enum: ['scaffolding', 'backend', 'frontend', 'qa', 'docs'] },
+              owner: { type: 'string', enum: ['backend', 'frontend', 'mobile', 'devops', 'docs'] },
               constraints: { type: 'array', items: { type: 'string' } },
               acceptance: { type: 'array', items: { type: 'string' } },
-              tests: { type: 'array', items: { type: 'string' } }
+              tests: { type: 'array', items: { type: 'string' } },
+              rollback: { type: 'string' }
             }
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'qa',
+    name: 'QA Manager',
+    description: 'Defines quality assurance workflows for CI/CD',
+    systemPrompt:
+      GLOBAL_GUARDRAILS +
+      `You are a QA Manager. Define quality assurance workflows for CI/CD.
+
+Include:
+- Lint and typecheck requirements
+- Unit test coverage goals
+- E2E test scenarios
+- Accessibility testing (WCAG AA)
+- Performance budgets (load time, bundle size)
+- Security scanning (OWASP, dependency checks)
+- Test environments and data seeding
+
+JSON only.`,
+    schema: {
+      type: 'object',
+      required: ['lintConfig', 'testCoverage', 'e2eScenarios', 'accessibility', 'performanceBudgets', 'security', 'testEnvironments'],
+      properties: {
+        lintConfig: {
+          type: 'object',
+          required: ['tool', 'rules'],
+          properties: {
+            tool: { type: 'string' },
+            rules: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        testCoverage: {
+          type: 'object',
+          required: ['target', 'critical'],
+          properties: {
+            target: { type: 'string' },
+            critical: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        e2eScenarios: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['name', 'steps', 'expected'],
+            properties: {
+              name: { type: 'string' },
+              steps: { type: 'array', items: { type: 'string' } },
+              expected: { type: 'string' }
+            }
+          }
+        },
+        accessibility: {
+          type: 'object',
+          required: ['standard', 'tools', 'checks'],
+          properties: {
+            standard: { type: 'string' },
+            tools: { type: 'array', items: { type: 'string' } },
+            checks: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        performanceBudgets: {
+          type: 'object',
+          required: ['loadTime', 'bundleSize', 'coreWebVitals'],
+          properties: {
+            loadTime: { type: 'string' },
+            bundleSize: { type: 'string' },
+            coreWebVitals: { type: 'object' }
+          }
+        },
+        security: {
+          type: 'array',
+          items: { type: 'string' }
+        },
+        testEnvironments: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['name', 'purpose', 'dataSeed'],
+            properties: {
+              name: { type: 'string' },
+              purpose: { type: 'string' },
+              dataSeed: { type: 'string' }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    type: 'techwriter',
+    name: 'Technical Writer',
+    description: 'Generates developer documentation templates',
+    systemPrompt:
+      GLOBAL_GUARDRAILS +
+      `You are a Technical Writer. Generate developer documentation templates.
+
+Create outlines for:
+- API Reference (endpoints, auth, examples)
+- Setup Guide (prerequisites, installation, configuration)
+- Release Checklist (pre-deploy, deploy, post-deploy, rollback)
+- Architecture Overview (system diagram description, key components, data flow)
+
+JSON only.`,
+    schema: {
+      type: 'object',
+      required: ['apiReference', 'setupGuide', 'releaseChecklist', 'architectureOverview'],
+      properties: {
+        apiReference: {
+          type: 'object',
+          required: ['sections', 'exampleEndpoints'],
+          properties: {
+            sections: { type: 'array', items: { type: 'string' } },
+            exampleEndpoints: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        setupGuide: {
+          type: 'object',
+          required: ['prerequisites', 'installationSteps', 'configuration'],
+          properties: {
+            prerequisites: { type: 'array', items: { type: 'string' } },
+            installationSteps: { type: 'array', items: { type: 'string' } },
+            configuration: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        releaseChecklist: {
+          type: 'object',
+          required: ['preDeploy', 'deploy', 'postDeploy', 'rollback'],
+          properties: {
+            preDeploy: { type: 'array', items: { type: 'string' } },
+            deploy: { type: 'array', items: { type: 'string' } },
+            postDeploy: { type: 'array', items: { type: 'string' } },
+            rollback: { type: 'array', items: { type: 'string' } }
+          }
+        },
+        architectureOverview: {
+          type: 'object',
+          required: ['systemDescription', 'keyComponents', 'dataFlow'],
+          properties: {
+            systemDescription: { type: 'string' },
+            keyComponents: { type: 'array', items: { type: 'string' } },
+            dataFlow: { type: 'array', items: { type: 'string' } }
           }
         }
       }
@@ -487,21 +766,30 @@ JSON only.`,
   {
     type: 'composer',
     name: 'Composer',
-    description: 'Merge all artifacts into build plan and prompts markdown files',
+    description: 'Merge all artifacts into comprehensive deliverables',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are the Composer. Merge all artifacts into two markdown files:
-1) Build Plan.md — strategy, UX, architecture, data model, API (excerpt), design system, risks, decisions.
-2) Prompts.md — ordered Bolt/Cursor tasks with acceptance criteria.
+      `You are the Composer. Merge all artifacts into multiple professional deliverables:
+
+1) Business Plan — research insights, strategy, market signals, monetization, risks, go-to-market
+2) Technical Architecture — system design, API, data model, infrastructure, scalability
+3) Development Sprint Plan — ordered Bolt/Cursor prompts grouped by bucket (scaffolding, backend, frontend, qa, docs) with dependencies
+4) Risk Mitigation Strategy — table of top risks with likelihood, impact, mitigation owner
+5) Go-to-Market Plan — channels, timeline, budget, early-adopter strategy
+6) QA & Documentation Plan — testing strategy, documentation templates
 
 Also output the final Decision Ledger (merged and deduped).
 JSON only.`,
     schema: {
       type: 'object',
-      required: ['buildPlanMd', 'promptsMd', 'decisionLedger'],
+      required: ['businessPlan', 'technicalArchitecture', 'sprintPlan', 'riskMitigation', 'goToMarket', 'qaDocsPlan', 'decisionLedger'],
       properties: {
-        buildPlanMd: { type: 'string' },
-        promptsMd: { type: 'string' },
+        businessPlan: { type: 'string' },
+        technicalArchitecture: { type: 'string' },
+        sprintPlan: { type: 'string' },
+        riskMitigation: { type: 'string' },
+        goToMarket: { type: 'string' },
+        qaDocsPlan: { type: 'string' },
         decisionLedger: {
           type: 'array',
           items: {
