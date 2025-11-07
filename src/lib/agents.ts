@@ -532,67 +532,34 @@ Include loading/skeleton patterns and motion durations. Avoid purple/indigo unle
     description: 'Generates comprehensive implementation prompts for Bolt/Cursor covering all phases',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Prompt Engineer. Generate 15-25 actionable prompts following company coding standards.
+      `You are a Prompt Engineer. Generate 10-15 concise prompts covering all essential development phases.
 
-REQUIRED PROMPT CATEGORIES (must include all):
+REQUIRED: Include at least one prompt from each category:
 
-1. PROJECT SETUP (scaffolding bucket):
-   - Initial project scaffolding with framework, build tools, and folder structure
-   - Environment configuration (.env setup, API keys placeholders)
-   - Git repository initialization and .gitignore
+1. SCAFFOLDING: Project setup, dependencies, env config
+2. DATABASE: Schema + migrations, connection
+3. AUTH: User authentication and authorization
+4. API: Core CRUD endpoints
+5. ROUTING: Navigation setup
+6. STATE: State management + API client
+7. FEATURES: 2-3 Must-Have features
+8. FORMS: Input handling and validation
+9. UI/UX: Loading, errors, empty states, responsive
+10. TESTING: Unit + E2E for critical paths
+11. POLISH: Accessibility, performance, security
+12. DEPLOY: Build, docs, release checklist
 
-2. DATABASE & BACKEND (backend bucket):
-   - Database schema design and migrations
-   - Database connection setup and configuration
-   - API endpoint implementation (CRUD operations)
-   - Authentication and authorization setup
-   - Server-side validation and error handling
-   - Background jobs/workers if needed
+Keep each prompt CONCISE:
+- Title: Clear, specific (10-60 chars)
+- Prompt: Focused task description (100-400 chars)
+- Files: Key files to create/modify
+- Bucket: scaffolding/backend/frontend/qa/docs
+- Owner: backend/frontend/fullstack/qa/devops
+- Acceptance: 2-4 clear success criteria
+- Tests: 1-3 test requirements
+- Rollback: Brief recovery note
 
-3. FRONTEND FOUNDATION (frontend bucket):
-   - UI component library setup
-   - Routing configuration
-   - State management setup (Context, Redux, Zustand, etc.)
-   - API client/service layer
-   - Authentication flow (login, signup, logout)
-
-4. CORE FEATURES (frontend bucket):
-   - Main user-facing features (based on Must-Have list)
-   - Form components with validation
-   - Data display components (lists, tables, cards)
-   - Search and filtering functionality
-   - Real-time updates if needed
-
-5. UX ENHANCEMENTS (frontend bucket):
-   - Loading states and skeleton screens
-   - Error boundaries and error messages
-   - Empty states
-   - Toast notifications/alerts
-   - Responsive design breakpoints
-
-6. QUALITY & TESTING (qa bucket):
-   - Unit tests for critical functions
-   - E2E tests for primary flows
-   - Accessibility improvements (ARIA labels, keyboard navigation)
-   - Performance optimization (code splitting, lazy loading)
-   - Security audit (XSS, CSRF protection)
-
-7. DEPLOYMENT & DOCS (docs bucket):
-   - Build and deployment configuration
-   - Environment-specific configs (dev, staging, prod)
-   - README with setup instructions
-   - API documentation
-   - Release checklist
-
-Each prompt must have:
-- Title, detailed prompt with context, files to touch
-- Bucket (scaffolding/backend/frontend/qa/docs)
-- Owner (backend/frontend/fullstack/devops/docs)
-- Constraints and acceptance criteria
-- Test requirements (unit/e2e/manual)
-- Rollback or idempotency note
-
-Order by dependency. Total: 15-25 prompts covering all categories above.
+Order by dependency. Total: 10-15 prompts.
 JSON only.`,
     schema: {
       type: 'object',
@@ -600,8 +567,8 @@ JSON only.`,
       properties: {
         bolt: {
           type: 'array',
-          minItems: 15,
-          maxItems: 25,
+          minItems: 10,
+          maxItems: 15,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
@@ -620,8 +587,8 @@ JSON only.`,
         },
         cursor: {
           type: 'array',
-          minItems: 15,
-          maxItems: 25,
+          minItems: 10,
+          maxItems: 15,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
