@@ -532,34 +532,31 @@ Include loading/skeleton patterns and motion durations. Avoid purple/indigo unle
     description: 'Generates comprehensive implementation prompts for Bolt/Cursor covering all phases',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Prompt Engineer. Generate 10-15 concise prompts covering all essential development phases.
+      `You are a Prompt Engineer. Generate 8-12 prompts for BOTH Bolt and Cursor (same prompts for both tools).
 
-REQUIRED: Include at least one prompt from each category:
+Cover these categories (at least 1 prompt each):
+1. SCAFFOLDING: Project setup, dependencies
+2. DATABASE: Schema, migrations, connection
+3. AUTH: Authentication system
+4. API: Core endpoints
+5. FEATURES: 2-3 Must-Have features
+6. UI/UX: Forms, loading, errors, responsive
+7. TESTING: Unit + E2E tests
+8. DEPLOY: Build, docs, checklist
 
-1. SCAFFOLDING: Project setup, dependencies, env config
-2. DATABASE: Schema + migrations, connection
-3. AUTH: User authentication and authorization
-4. API: Core CRUD endpoints
-5. ROUTING: Navigation setup
-6. STATE: State management + API client
-7. FEATURES: 2-3 Must-Have features
-8. FORMS: Input handling and validation
-9. UI/UX: Loading, errors, empty states, responsive
-10. TESTING: Unit + E2E for critical paths
-11. POLISH: Accessibility, performance, security
-12. DEPLOY: Build, docs, release checklist
+Each prompt needs:
+- title (clear, 10-60 chars)
+- prompt (focused, 100-400 chars)
+- files (array of file paths)
+- bucket (scaffolding/backend/frontend/qa/docs)
+- owner (backend/frontend/fullstack/qa/devops)
+- constraints (1-3 items)
+- acceptance (2-4 criteria)
+- tests (1-3 requirements)
+- rollback (brief note)
 
-Keep each prompt CONCISE:
-- Title: Clear, specific (10-60 chars)
-- Prompt: Focused task description (100-400 chars)
-- Files: Key files to create/modify
-- Bucket: scaffolding/backend/frontend/qa/docs
-- Owner: backend/frontend/fullstack/qa/devops
-- Acceptance: 2-4 clear success criteria
-- Tests: 1-3 test requirements
-- Rollback: Brief recovery note
-
-Order by dependency. Total: 10-15 prompts.
+IMPORTANT: Generate the SAME 8-12 prompts for BOTH bolt and cursor arrays.
+Order by dependency.
 JSON only.`,
     schema: {
       type: 'object',
@@ -567,8 +564,8 @@ JSON only.`,
       properties: {
         bolt: {
           type: 'array',
-          minItems: 10,
-          maxItems: 15,
+          minItems: 8,
+          maxItems: 12,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
@@ -587,8 +584,8 @@ JSON only.`,
         },
         cursor: {
           type: 'array',
-          minItems: 10,
-          maxItems: 15,
+          minItems: 8,
+          maxItems: 12,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
