@@ -529,21 +529,70 @@ Include loading/skeleton patterns and motion durations. Avoid purple/indigo unle
   {
     type: 'prompts',
     name: 'Prompt Engineer',
-    description: 'Generates implementation prompts for Bolt/Cursor with bucketing and ownership',
+    description: 'Generates comprehensive implementation prompts for Bolt/Cursor covering all phases',
     systemPrompt:
       GLOBAL_GUARDRAILS +
-      `You are a Prompt Engineer. Generate actionable prompts following company coding standards (naming conventions, ESLint rules, test coverage goals, folder structure).
+      `You are a Prompt Engineer. Generate 15-25 actionable prompts following company coding standards.
 
-Generate 6–12 tightly-scoped Bolt/Cursor prompts. Each item must have:
-- Title, prompt (with context), files to touch
-- Bucket (scaffolding, backend, frontend, qa, docs)
-- Owner (backend/mobile/devops/docs)
+REQUIRED PROMPT CATEGORIES (must include all):
+
+1. PROJECT SETUP (scaffolding bucket):
+   - Initial project scaffolding with framework, build tools, and folder structure
+   - Environment configuration (.env setup, API keys placeholders)
+   - Git repository initialization and .gitignore
+
+2. DATABASE & BACKEND (backend bucket):
+   - Database schema design and migrations
+   - Database connection setup and configuration
+   - API endpoint implementation (CRUD operations)
+   - Authentication and authorization setup
+   - Server-side validation and error handling
+   - Background jobs/workers if needed
+
+3. FRONTEND FOUNDATION (frontend bucket):
+   - UI component library setup
+   - Routing configuration
+   - State management setup (Context, Redux, Zustand, etc.)
+   - API client/service layer
+   - Authentication flow (login, signup, logout)
+
+4. CORE FEATURES (frontend bucket):
+   - Main user-facing features (based on Must-Have list)
+   - Form components with validation
+   - Data display components (lists, tables, cards)
+   - Search and filtering functionality
+   - Real-time updates if needed
+
+5. UX ENHANCEMENTS (frontend bucket):
+   - Loading states and skeleton screens
+   - Error boundaries and error messages
+   - Empty states
+   - Toast notifications/alerts
+   - Responsive design breakpoints
+
+6. QUALITY & TESTING (qa bucket):
+   - Unit tests for critical functions
+   - E2E tests for primary flows
+   - Accessibility improvements (ARIA labels, keyboard navigation)
+   - Performance optimization (code splitting, lazy loading)
+   - Security audit (XSS, CSRF protection)
+
+7. DEPLOYMENT & DOCS (docs bucket):
+   - Build and deployment configuration
+   - Environment-specific configs (dev, staging, prod)
+   - README with setup instructions
+   - API documentation
+   - Release checklist
+
+Each prompt must have:
+- Title, detailed prompt with context, files to touch
+- Bucket (scaffolding/backend/frontend/qa/docs)
+- Owner (backend/frontend/fullstack/devops/docs)
 - Constraints and acceptance criteria
-- Acceptance tests (unit/e2e)
+- Test requirements (unit/e2e/manual)
 - Rollback or idempotency note
-- Test requirements
 
-Order by dependency. Include "Project Scaffolding" first and "Smoke Test + Release Checklist" last.
+Order by dependency. Total: 15-25 prompts covering all categories above.
 JSON only.`,
     schema: {
       type: 'object',
@@ -551,37 +600,41 @@ JSON only.`,
       properties: {
         bolt: {
           type: 'array',
+          minItems: 15,
+          maxItems: 25,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
             properties: {
-              title: { type: 'string' },
-              prompt: { type: 'string' },
+              title: { type: 'string', minLength: 5 },
+              prompt: { type: 'string', minLength: 50 },
               files: { type: 'array', items: { type: 'string' } },
               bucket: { type: 'string', enum: ['scaffolding', 'backend', 'frontend', 'qa', 'docs'] },
               owner: { type: 'string' },
-              constraints: { type: 'array', items: { type: 'string' } },
-              acceptance: { type: 'array', items: { type: 'string' } },
-              tests: { type: 'array', items: { type: 'string' } },
-              rollback: { type: 'string' }
+              constraints: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              acceptance: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              tests: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              rollback: { type: 'string', minLength: 10 }
             }
           }
         },
         cursor: {
           type: 'array',
+          minItems: 15,
+          maxItems: 25,
           items: {
             type: 'object',
             required: ['title', 'prompt', 'files', 'bucket', 'owner', 'constraints', 'acceptance', 'tests', 'rollback'],
             properties: {
-              title: { type: 'string' },
-              prompt: { type: 'string' },
+              title: { type: 'string', minLength: 5 },
+              prompt: { type: 'string', minLength: 50 },
               files: { type: 'array', items: { type: 'string' } },
               bucket: { type: 'string', enum: ['scaffolding', 'backend', 'frontend', 'qa', 'docs'] },
               owner: { type: 'string' },
-              constraints: { type: 'array', items: { type: 'string' } },
-              acceptance: { type: 'array', items: { type: 'string' } },
-              tests: { type: 'array', items: { type: 'string' } },
-              rollback: { type: 'string' }
+              constraints: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              acceptance: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              tests: { type: 'array', items: { type: 'string' }, minItems: 1 },
+              rollback: { type: 'string', minLength: 10 }
             }
           }
         }
